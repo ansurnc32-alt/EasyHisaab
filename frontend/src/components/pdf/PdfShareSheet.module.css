@@ -1,0 +1,97 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 220;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.sheet {
+  width: min(100%, 560px);
+  border-radius: 24px 24px 0 0;
+  background: #ffffff;
+  box-shadow: 0 -12px 35px rgba(15, 23, 42, 0.16);
+  padding: 1rem 1rem 1.25rem;
+  border: 1px solid #E2E8F0;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #0F172A;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #64748B;
+  font-size: 0.9rem;
+}
+
+.closeButton {
+  border: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8FAFC;
+  color: #334155;
+  cursor: pointer;
+}
+
+.closeButton:focus-visible,
+.option:focus-visible {
+  outline: 3px solid #2DD4BF;
+  outline-offset: 2px;
+}
+
+.options {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  background: #FFFFFF;
+  color: #0F172A;
+  cursor: pointer;
+}
+
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F0FDFA;
+  color: #0F766E;
+}
+
+.optionLabel {
+  font-weight: 600;
+}
+
+@media (min-width: 641px) {
+  .sheet {
+    border-radius: 24px;
+  }
+}

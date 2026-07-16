@@ -1,0 +1,73 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.dialog {
+  width: min(100%, 440px);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.2);
+  padding: 1.25rem;
+  border: 1px solid #E2E8F0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #0F172A;
+}
+
+.closeButton {
+  border: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8FAFC;
+  color: #334155;
+  cursor: pointer;
+}
+
+.closeButton:focus-visible,
+.primaryAction:focus-visible {
+  outline: 3px solid #2DD4BF;
+  outline-offset: 2px;
+}
+
+.message {
+  margin: 1rem 0 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.primaryAction {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  background: #0F766E;
+  color: #ffffff;
+  cursor: pointer;
+}
