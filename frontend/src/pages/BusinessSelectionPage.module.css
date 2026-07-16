@@ -1,0 +1,25 @@
+.pageWrapper {
+  padding-bottom: 120px;
+}
+
+.searchSection {
+  margin-bottom: 3rem;
+}
+
+.gridSection {
+  margin-bottom: 3rem;
+}
+
+.stickyFooter {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  padding: 1.5rem 0;
+  border-top: 1px solid #E2E8F0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+}
