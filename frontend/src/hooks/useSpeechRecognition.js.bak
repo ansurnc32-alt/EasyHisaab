@@ -1,0 +1,218 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+export const SPEECH_RECOGNITION_LANGUAGE = 'hi-IN';
+
+const getSpeechRecognitionConstructor = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.SpeechRecognition || window.webkitSpeechRecognition || null;
+};
+
+const getFriendlyErrorMessage = (error) => {
+  switch (error) {
+    case 'not-allowed':
+      return 'माइक की अनुमति दीजिए ताकि हम आपकी आवाज़ सुना सकें।';
+    case 'no-speech':
+      return 'कोई आवाज़ नहीं सुनी गई। कृपया फिर से बोलने की कोशिश करें।';
+    case 'network':
+      return 'नेटवर्क की समस्या के कारण आवाज़ पहचान नहीं हो सकी।';
+    case 'aborted':
+      return 'रिकॉग्निशन रोक दिया गया।';
+    case 'not-supported':
+      return 'यह ब्राउज़र आवाज़ पहचान का समर्थन नहीं करता।';
+    default:
+      return 'कुछ समस्या हुई। कृपया फिर से कोशिश करें।';
+  }
+};
+
+const useSpeechRecognition = ({ lang = SPEECH_RECOGNITION_LANGUAGE } = {}) => {
+  const [transcript, setTranscript] = useState('');
+  const [listening, setListening] = useState(false);
+  const [error, setError] = useState('');
+  const [browserSupportsSpeechRecognition, setBrowserSupportsSpeechRecognition] = useState(
+    Boolean(getSpeechRecognitionConstructor())
+  );
+
+  const recognitionRef = useRef(null);
+  const finalTranscriptRef = useRef('');
+  const listeningRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  const resetTranscript = useCallback(() => {
+    finalTranscriptRef.current = '';
+    setTranscript('');
+    setError('');
+  }, []);
+
+  const createRecognition = useCallback(() => {
+    const SpeechRecognition = getSpeechRecognitionConstructor();
+
+    if (!SpeechRecognition) {
+      setBrowserSupportsSpeechRecognition(false);
+      setError('यह ब्राउज़र आवाज़ पहचान का समर्थन नहीं करता।');
+      return null;
+    }
+
+    if (recognitionRef.current) {
+      return recognitionRef.current;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.lang = lang;
+
+    recognition.onstart = () => {
+      if (!isMountedRef.current) return;
+      console.log('[Speech] recognition.onstart');
+      listeningRef.current = true;
+      setListening(true);
+      setError('');
+    };
+
+    recognition.onaudiostart = () => {
+      console.log('[Speech] recognition.onaudiostart');
+    };
+
+    recognition.onsoundstart = () => {
+      console.log('[Speech] recognition.onsoundstart');
+    };
+
+    recognition.onspeechstart = () => {
+      console.log('[Speech] recognition.onspeechstart');
+    };
+
+    recognition.onresult = (event) => {
+      if (!isMountedRef.current) return;
+      console.log('[Speech] recognition.onresult', event.results);
+
+      let interimText = '';
+      let finalText = '';
+
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const resultText = result[0].transcript.trim();
+
+        if (result.isFinal) {
+          finalText += `${resultText} `;
+        } else {
+          interimText += `${resultText} `;
+        }
+      }
+
+      if (finalText.trim()) {
+        finalTranscriptRef.current = `${finalTranscriptRef.current} ${finalText}`.trim();
+      }
+
+      const nextTranscript = [finalTranscriptRef.current, interimText.trim()].filter(Boolean).join(' ').trim();
+      setTranscript(nextTranscript);
+    };
+
+    recognition.onspeechend = () => {
+      console.log('[Speech] recognition.onspeechend');
+    };
+
+    recognition.onsoundend = () => {
+      console.log('[Speech] recognition.onsoundend');
+    };
+
+    recognition.onaudioend = () => {
+      console.log('[Speech] recognition.onaudioend');
+    };
+
+    recognition.onerror = (event) => {
+      if (!isMountedRef.current) return;
+      console.log('[Speech] recognition.onerror', event.error);
+
+      listeningRef.current = false;
+      setListening(false);
+      setError(getFriendlyErrorMessage(event.error));
+    };
+
+    recognition.onend = () => {
+      if (!isMountedRef.current) return;
+      console.log('[Speech] recognition.onend');
+      listeningRef.current = false;
+      setListening(false);
+      setError('');
+    };
+
+    recognitionRef.current = recognition;
+    return recognition;
+  }, [lang]);
+
+  const startListening = useCallback(() => {
+    console.log('[Speech] startListening()');
+    const recognition = createRecognition();
+
+    if (!recognition) {
+      return;
+    }
+
+    if (listeningRef.current) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      recognition.start();
+    } catch (startError) {
+      if (startError?.name === 'InvalidStateError') {
+        return;
+      }
+
+      listeningRef.current = false;
+      setListening(false);
+      setError('पहचान शुरू नहीं की जा सकी। कृपया फिर से कोशिश करें।');
+    }
+  }, [createRecognition]);
+
+  const stopListening = useCallback(() => {
+    console.log('[Speech] stopListening()');
+    if (!recognitionRef.current) {
+      listeningRef.current = false;
+      setListening(false);
+      return;
+    }
+
+    try {
+      recognitionRef.current.stop();
+    } catch (stopError) {
+      listeningRef.current = false;
+      setListening(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const SpeechRecognition = getSpeechRecognitionConstructor();
+    setBrowserSupportsSpeechRecognition(Boolean(SpeechRecognition));
+    createRecognition();
+
+    return () => {
+      isMountedRef.current = false;
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (cleanupError) {
+          // Ignore cleanup errors while unmounting.
+        }
+      }
+    };
+  }, [createRecognition]);
+
+  return {
+    startListening,
+    stopListening,
+    transcript,
+    listening,
+    error,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+  };
+};
+
+export default useSpeechRecognition;

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Section from '../components/ui/Section';
 import Container from '../components/ui/Container';
@@ -6,6 +7,8 @@ import ReviewItemCard from '../components/review/ReviewItemCard';
 import ReviewItemList from '../components/review/ReviewItemList';
 import ReviewSummary from '../components/review/ReviewSummary';
 import EmptyReviewState from '../components/review/EmptyReviewState';
+import { parseHindiTranscript } from '../utils/parseTranscript';
+import { getBusinessTypeLabel, normalizeBusinessType } from '../utils/businessType';
 import styles from './ReviewPage.module.css';
 
 const MOCK_ITEMS = [
@@ -16,7 +19,55 @@ const MOCK_ITEMS = [
 ];
 
 const ReviewPage = () => {
+  const location = useLocation();
+  const transcript = location.state?.transcript || '';
+  const businessType = normalizeBusinessType(location.state?.businessType || 'grocery');
+  const parsedResult = useMemo(() => parseHindiTranscript(transcript, businessType), [transcript, businessType]);
   const [items, setItems] = useState(MOCK_ITEMS);
+
+  useEffect(() => {
+    if (parsedResult.items.length > 0) {
+      setItems(parsedResult.items);
+    } else {
+      setItems(MOCK_ITEMS);
+    }
+  }, [parsedResult.items]);
+
+  const handleUpdateItem = (itemId, updates) => {
+    setItems((currentItems) =>
+      currentItems.map((item) => {
+        if (item.id !== itemId) {
+          return item;
+        }
+
+        const parsedQuantity = Number(updates.quantity ?? item.quantity ?? '1') || 1;
+        const parsedUnitPrice = Number(updates.unitPrice ?? updates.price ?? item.unitPrice ?? item.price ?? 0) || 0;
+        const amount = parsedQuantity * parsedUnitPrice;
+
+        return {
+          ...item,
+          ...updates,
+          name: updates.name ?? item.name ?? item.item ?? '',
+          item: updates.name ?? item.item ?? item.name ?? '',
+          quantity: updates.quantity ?? item.quantity ?? '1',
+          unit: item.unit || 'किलो',
+          unitPrice: String(parsedUnitPrice),
+          price: String(parsedUnitPrice),
+          amount,
+          lineTotal: amount,
+        };
+      })
+    );
+  };
+
+  const handleDeleteItem = (itemId) => {
+    setItems((currentItems) => currentItems.filter((item) => item.id !== itemId));
+  };
+
+  const estimatedTotal = useMemo(() => {
+    const total = items.reduce((sum, item) => sum + Number(item.amount ?? item.lineTotal ?? item.price ?? 0), 0);
+    return total.toFixed(2);
+  }, [items]);
 
   return (
     <div className={styles.pageWrapper}>
@@ -29,8 +80,13 @@ const ReviewPage = () => {
           
           <div className={styles.chipContainer}>
             <div className={styles.businessChip}>
-              किराना
+              {getBusinessTypeLabel(businessType)}
             </div>
+            {parsedResult.customerName && (
+              <div className={styles.customerChip}>
+                ग्राहक: {parsedResult.customerName}
+              </div>
+            )}
           </div>
 
           {items.length === 0 ? (
@@ -40,10 +96,9 @@ const ReviewPage = () => {
               {items.map(item => (
                 <ReviewItemCard
                   key={item.id}
-                  name={item.name}
-                  quantity={item.quantity}
-                  unit={item.unit}
-                  price={item.price}
+                  item={item}
+                  onUpdateItem={handleUpdateItem}
+                  onDeleteItem={handleDeleteItem}
                 />
               ))}
             </ReviewItemList>
@@ -54,7 +109,7 @@ const ReviewPage = () => {
 
       <ReviewSummary 
         totalItems={items.length} 
-        estimatedTotal={items.length > 0 ? "290.00" : "0.00"} 
+        estimatedTotal={estimatedTotal} 
       />
     </div>
   );

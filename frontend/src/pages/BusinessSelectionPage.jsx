@@ -14,6 +14,7 @@ import PopularBusinesses from '../components/business/PopularBusinesses';
 import SearchBusiness from '../components/business/SearchBusiness';
 import BusinessGrid from '../components/business/BusinessGrid';
 import BusinessCard from '../components/business/BusinessCard';
+import { BUSINESS_TYPE_OPTIONS, normalizeBusinessType } from '../utils/businessType';
 import styles from './BusinessSelectionPage.module.css';
 
 const POPULAR_BUSINESSES = [
@@ -44,15 +45,24 @@ const ALL_BUSINESSES = [
 const BusinessSelectionPage = () => {
   const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedBusinessType, setSelectedBusinessType] = useState('grocery');
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSelect = (id) => {
     setSelectedId(id);
   };
 
+  const handleBusinessTypeSelect = (value) => {
+    setSelectedBusinessType(normalizeBusinessType(value));
+  };
+
   const handleContinue = () => {
     if (selectedId) {
-      navigate('/voice');
+      navigate('/voice', {
+        state: {
+          businessType: selectedBusinessType,
+        },
+      });
     }
   };
 
@@ -72,6 +82,23 @@ const BusinessSelectionPage = () => {
           
           <div className={styles.searchSection}>
             <SearchBusiness value={searchQuery} onChange={setSearchQuery} />
+          </div>
+
+          <div className={styles.businessTypeSection} role="tablist" aria-label="Business mode selector">
+            {BUSINESS_TYPE_OPTIONS.map((option) => {
+              const isActive = selectedBusinessType === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`${styles.businessTypeButton} ${isActive ? styles.businessTypeButtonActive : ''}`}
+                  onClick={() => handleBusinessTypeSelect(option.value)}
+                  aria-pressed={isActive}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
           </div>
 
           {!searchQuery && (
