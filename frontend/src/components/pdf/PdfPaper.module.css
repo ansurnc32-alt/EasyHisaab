@@ -1,0 +1,27 @@
+.paperWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.paper {
+  background-color: #FFFFFF;
+  width: 100%;
+  max-width: 794px;
+  min-height: 1123px;
+  aspect-ratio: 1 / 1.414;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 768px) {
+  .paper {
+    padding: 1.5rem;
+    min-height: auto;
+    border-radius: 4px;
+  }
+}

@@ -1,0 +1,33 @@
+.actionBarWrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid #E2E8F0;
+  padding: 1.25rem 0;
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  align-items: center;
+}
+
+.primaryActions {
+  display: flex;
+  flex: 1;
+  gap: 1rem;
+}
+
+.primaryActions > * {
+  flex: 1;
+}
+
+.shareBtn {
+  flex-shrink: 0;
+}

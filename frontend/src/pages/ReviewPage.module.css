@@ -1,0 +1,21 @@
+.pageWrapper {
+  padding-bottom: 200px;
+}
+
+.chipContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+}
+
+.businessChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.25rem;
+  background-color: rgba(15, 118, 110, 0.1);
+  color: #0F766E;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+}
