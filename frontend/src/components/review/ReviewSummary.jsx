@@ -1,11 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Container from '../ui/Container';
 import Button from '../ui/Button';
+import { normalizeBusinessType } from '../../utils/businessType';
 import styles from './ReviewSummary.module.css';
 
 const ReviewSummary = ({ totalItems, estimatedTotal }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const businessType = normalizeBusinessType(location.state?.businessType || 'grocery');
 
   return (
     <div className={styles.stickyWrapper}>
@@ -24,7 +27,7 @@ const ReviewSummary = ({ totalItems, estimatedTotal }) => {
           </div>
 
           <div className={styles.actions}>
-            <Button variant="outline" onClick={() => navigate('/voice')}>
+            <Button variant="outline" onClick={() => navigate('/voice', { state: { businessType } })}>
               वापस
             </Button>
             <Button onClick={() => navigate('/pdf')}>

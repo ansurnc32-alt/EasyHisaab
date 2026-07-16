@@ -1,11 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ClipboardList } from 'lucide-react';
 import Button from '../ui/Button';
+import { normalizeBusinessType } from '../../utils/businessType';
 import styles from './EmptyReviewState.module.css';
 
 const EmptyReviewState = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const businessType = normalizeBusinessType(location.state?.businessType || 'grocery');
 
   return (
     <div className={styles.container}>
@@ -14,7 +17,7 @@ const EmptyReviewState = () => {
       </div>
       <h3 className={styles.title}>अभी कोई सामान नहीं मिला</h3>
       <p className={styles.subtitle}>दोबारा रिकॉर्ड करके देखें</p>
-      <Button onClick={() => navigate('/voice')}>
+      <Button onClick={() => navigate('/voice', { state: { businessType } })}>
         फिर से रिकॉर्ड करें
       </Button>
     </div>

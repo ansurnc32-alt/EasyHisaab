@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/ui/PageHeader';
 import Section from '../components/ui/Section';
 import Container from '../components/ui/Container';
@@ -9,6 +9,7 @@ import ReviewSummary from '../components/review/ReviewSummary';
 import EmptyReviewState from '../components/review/EmptyReviewState';
 import { parseHindiTranscript } from '../utils/parseTranscript';
 import { getBusinessTypeLabel, normalizeBusinessType } from '../utils/businessType';
+import { resolveVoiceCommand } from '../utils/voiceCommands';
 import styles from './ReviewPage.module.css';
 
 const MOCK_ITEMS = [
@@ -20,8 +21,10 @@ const MOCK_ITEMS = [
 
 const ReviewPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const transcript = location.state?.transcript || '';
   const businessType = normalizeBusinessType(location.state?.businessType || 'grocery');
+  const voiceCommand = useMemo(() => resolveVoiceCommand(transcript), [transcript]);
   const parsedResult = useMemo(() => parseHindiTranscript(transcript, businessType), [transcript, businessType]);
   const [items, setItems] = useState(MOCK_ITEMS);
 
@@ -69,6 +72,25 @@ const ReviewPage = () => {
     return total.toFixed(2);
   }, [items]);
 
+  useEffect(() => {
+    if (!voiceCommand) {
+      return;
+    }
+
+    if (voiceCommand.action?.type === 'navigate') {
+      if (voiceCommand.action.to === 'back') {
+        navigate(-1);
+      } else {
+        navigate(voiceCommand.action.to, { state: { transcript, businessType } });
+      }
+      return;
+    }
+  }, [voiceCommand, transcript, businessType, navigate]);
+
+  if (voiceCommand) {
+    return null;
+  }
+
   return (
     <div className={styles.pageWrapper}>
       <Section style={{ paddingTop: '40px', paddingBottom: '20px' }}>
@@ -80,7 +102,7 @@ const ReviewPage = () => {
           
           <div className={styles.chipContainer}>
             <div className={styles.businessChip}>
-              {getBusinessTypeLabel(businessType)}
+              Business: {getBusinessTypeLabel(businessType)}
             </div>
             {parsedResult.customerName && (
               <div className={styles.customerChip}>

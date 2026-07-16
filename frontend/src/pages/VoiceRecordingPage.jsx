@@ -5,6 +5,7 @@ import { Mic, Square } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import { normalizeBusinessType, getBusinessTypeLabel } from '../utils/businessType';
+import { resolveVoiceCommand } from '../utils/voiceCommands';
 import styles from './VoiceRecordingPage.module.css';
 
 const VoiceRecordingPage = () => {
@@ -53,10 +54,29 @@ const VoiceRecordingPage = () => {
       return;
     }
 
-    if (transcript.trim()) {
+    const trimmedTranscript = transcript.trim();
+    const voiceCommand = resolveVoiceCommand(trimmedTranscript);
+
+    if (voiceCommand?.action?.type === 'navigate') {
+      if (voiceCommand.action.to === 'back') {
+        navigate(-1);
+      } else {
+        navigate(voiceCommand.action.to, { state: { transcript: trimmedTranscript, businessType } });
+      }
+      return;
+    }
+
+    if (voiceCommand?.action?.type === 'action') {
+      if (['download', 'print', 'share'].includes(voiceCommand.action.name)) {
+        navigate('/pdf', { state: { transcript: trimmedTranscript, businessType } });
+      }
+      return;
+    }
+
+    if (trimmedTranscript) {
       navigate('/review', {
         state: {
-          transcript,
+          transcript: trimmedTranscript,
           businessType,
         },
       });

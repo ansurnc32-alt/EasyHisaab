@@ -8,7 +8,7 @@ import PdfShareSheet from './PdfShareSheet';
 import PdfPrintDialog from './PdfPrintDialog';
 import styles from './PdfActionBar.module.css';
 
-const PdfActionBar = () => {
+const PdfActionBar = ({ onDownload, onShare, onPrint, onNewBill }) => {
   const navigate = useNavigate();
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [showShareSheet, setShowShareSheet] = useState(false);
@@ -20,19 +20,19 @@ const PdfActionBar = () => {
         <Container>
           <div className={styles.actions}>
             <div className={styles.primaryActions}>
-              <Button variant="outline" onClick={() => setShowPrintDialog(true)} className={styles.actionButton}>
+              <Button variant="outline" onClick={() => { if (onPrint) { onPrint(); } else { setShowPrintDialog(true); } }} className={styles.actionButton}>
                 <Printer size={18} />
                 <span>प्रिंट करें</span>
               </Button>
-              <Button variant="outline" onClick={() => setShowShareSheet(true)} className={styles.actionButton}>
+              <Button variant="outline" onClick={() => { if (onShare) { onShare(); } else { setShowShareSheet(true); } }} className={styles.actionButton}>
                 <Share2 size={18} />
                 <span>शेयर करें</span>
               </Button>
-              <Button variant="outline" onClick={() => setShowDownloadModal(true)} className={styles.actionButton}>
+              <Button variant="outline" onClick={() => { if (onDownload) { onDownload(); } else { setShowDownloadModal(true); } }} className={styles.actionButton}>
                 <Download size={18} />
                 <span>डाउनलोड PDF</span>
               </Button>
-              <Button onClick={() => navigate('/business-selection')} className={styles.actionButton}>
+              <Button onClick={() => { if (onNewBill) { onNewBill(); } else { navigate('/business-selection'); } }} className={styles.actionButton}>
                 <Plus size={18} />
                 <span>नया बिल</span>
               </Button>
