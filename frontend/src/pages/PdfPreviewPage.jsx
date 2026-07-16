@@ -29,7 +29,7 @@ const MOCK_INVOICE_DATA = {
 const PdfPreviewPage = () => {
   return (
     <div className={styles.pageWrapper}>
-      <Section style={{ paddingTop: '40px', paddingBottom: '0' }}>
+      <Section className={styles.previewSection}>
         <Container>
           <PageHeader 
             title="बिल पूर्वावलोकन" 

@@ -6,7 +6,7 @@
   background-color: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-top: 1px solid #E2E8F0;
-  padding: 1.25rem 0;
+  padding: 1rem 0;
   z-index: 100;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
 }
@@ -16,6 +16,7 @@
   gap: 1rem;
   width: 100%;
   align-items: center;
+  justify-content: space-between;
 }
 
 .primaryActions {
@@ -26,8 +27,25 @@
 
 .primaryActions > * {
   flex: 1;
+  min-width: 0;
 }
 
 .shareBtn {
   flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    flex-wrap: wrap;
+  }
+
+  .primaryActions {
+    width: 100%;
+  }
+
+  .shareBtn {
+    margin-left: auto;
+  }
 }
