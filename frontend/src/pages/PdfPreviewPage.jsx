@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import html2pdf from 'html2pdf.js';
 import PageHeader from '../components/ui/PageHeader';
 import Section from '../components/ui/Section';
 import Container from '../components/ui/Container';
@@ -16,10 +17,38 @@ import PdfPrintDialog from '../components/pdf/PdfPrintDialog';
 import { resolveVoiceCommand } from '../utils/voiceCommands';
 import styles from './PdfPreviewPage.module.css';
 
+const sanitizeItemName = (name = '', price = '') => {
+  if (!name) return '';
+  let clean = name.trim();
+
+  // Remove bill/invoice terms (case-insensitive, as standalone words)
+  clean = clean.replace(/\b(bill|invoice)\b/gi, '');
+  clean = clean.replace(/(^|\s)(बिल)(\s|$)/g, ' ');
+
+  // Remove common price patterns: @ ₹60, @ 60, ₹60, Rs 60, Rs. 60, @ Rs 60
+  clean = clean.replace(/@?\s*(₹|Rs\.?|rupees?|rupee|रु)\s*\d+(\.\d+)?/gi, '');
+  clean = clean.replace(/@\s*\d+(\.\d+)?/gi, '');
+
+  // Remove exact trailing prices if matching the item price
+  if (price) {
+    const priceNum = Number(price);
+    if (!isNaN(priceNum) && priceNum > 0) {
+      const priceStr = priceNum.toString();
+      const escPrice = priceStr.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`(^|\\s)(₹|Rs\\.?|rupees?|rupee|रु)?\\s*${escPrice}(\\s|$)`, 'gi');
+      clean = clean.replace(regex, ' ');
+    }
+  }
+
+  // Clean excess spaces
+  return clean.replace(/\s+/g, ' ').trim();
+};
+
 const PdfPreviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const paperRef = useRef(null);
 
   const state = location.state || {};
   const items = state.items;
@@ -50,8 +79,13 @@ const PdfPreviewPage = () => {
   });
 
   const [invoiceNumber] = useState(() => {
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `INV-${new Date().getFullYear()}-${randomNum}`;
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}${mm}${dd}`;
+    const randomSeq = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+    return `EH-${dateStr}-${randomSeq}`;
   });
 
   useEffect(() => {
@@ -77,9 +111,9 @@ const PdfPreviewPage = () => {
     if (!items) return [];
     return items.map((item) => {
       const quantity = item.quantity || '1';
+      const priceVal = item.unitPrice ?? item.price;
 
-      let priceVal = item.unitPrice ?? item.price;
-      let amountVal = item.amount ?? item.lineTotal;
+      const sanitizedName = sanitizeItemName(item.name || item.item, priceVal);
 
       let formattedPrice = '';
       if (priceVal !== undefined && priceVal !== null && priceVal !== '') {
@@ -90,15 +124,16 @@ const PdfPreviewPage = () => {
       }
 
       let formattedAmount = '';
-      if (amountVal !== undefined && amountVal !== null && amountVal !== '') {
-        const num = Number(amountVal);
-        if (!isNaN(num)) {
-          formattedAmount = num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
+      if (formattedPrice !== '') {
+        const calculatedAmount = Number(quantity) * Number(formattedPrice);
+        if (!isNaN(calculatedAmount)) {
+          formattedAmount = calculatedAmount % 1 === 0 ? calculatedAmount.toFixed(0) : calculatedAmount.toFixed(2);
         }
       }
 
       return {
         ...item,
+        name: sanitizedName,
         quantity,
         price: formattedPrice,
         amount: formattedAmount,
@@ -108,13 +143,11 @@ const PdfPreviewPage = () => {
 
   // Calculate subtotal and grandTotal dynamically
   const subtotal = useMemo(() => {
-    if (!items) return 0;
-    return items.reduce((sum, item) => {
-      const amtVal = item.amount ?? item.lineTotal ?? (Number(item.quantity || 1) * Number(item.unitPrice ?? item.price ?? 0));
-      const amt = Number(amtVal);
-      return sum + (isNaN(amt) || amtVal === null || amtVal === undefined || amtVal === '' ? 0 : amt);
+    return processedItems.reduce((sum, item) => {
+      const amt = Number(item.amount);
+      return sum + (isNaN(amt) || item.amount === '' ? 0 : amt);
     }, 0);
-  }, [items]);
+  }, [processedItems]);
 
   const discount = 0;
   const grandTotal = subtotal - discount;
@@ -126,6 +159,28 @@ const PdfPreviewPage = () => {
   const formattedGrandTotal = useMemo(() => {
     return grandTotal % 1 === 0 ? grandTotal.toFixed(0) : grandTotal.toFixed(2);
   }, [grandTotal]);
+
+  const handleDownloadPdf = (formatOption) => {
+    const element = paperRef.current;
+    if (!element) return;
+
+    let scale = 2;
+    if (formatOption === 'high-quality') {
+      scale = 3;
+    } else if (formatOption === 'print-ready') {
+      scale = 4;
+    }
+
+    const options = {
+      margin: 0,
+      filename: `${invoiceNumber}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: scale, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(options).from(element).save();
+  };
 
   if (!state.items) {
     return null;
@@ -146,7 +201,7 @@ const PdfPreviewPage = () => {
         </Container>
       </Section>
 
-      <PdfPaper>
+      <PdfPaper ref={paperRef}>
         <PdfHeader 
           businessName={businessName}
           businessType={displayBusinessType}
@@ -169,7 +224,7 @@ const PdfPreviewPage = () => {
         onPrint={() => setShowPrintDialog(true)}
         onNewBill={() => navigate('/business-selection')}
       />
-      <PdfDownloadModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} />
+      <PdfDownloadModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} onDownload={handleDownloadPdf} />
       <PdfShareSheet isOpen={showShareSheet} onClose={() => setShowShareSheet(false)} />
       <PdfPrintDialog isOpen={showPrintDialog} onClose={() => setShowPrintDialog(false)} />
     </div>

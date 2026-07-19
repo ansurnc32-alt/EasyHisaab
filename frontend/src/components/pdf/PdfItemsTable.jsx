@@ -17,9 +17,9 @@ const PdfItemsTable = ({ items, showPrice = true }) => {
         <tbody>
           {items.map((item, index) => (
             <tr key={index}>
-              <td className={styles.td}>{item.name}</td>
-              <td className={`${styles.td} ${styles.alignCenter}`}>{item.quantity}</td>
-              <td className={`${styles.td} ${styles.alignCenter}`}>{item.unit}</td>
+              <td className={styles.td}>{item.name || '—'}</td>
+              <td className={`${styles.td} ${styles.alignCenter}`}>{item.quantity || '—'}</td>
+              <td className={`${styles.td} ${styles.alignCenter}`}>{item.unit || '—'}</td>
               {showPrice && (
                 <td className={`${styles.td} ${styles.alignRight}`}>
                   {item.price !== undefined && item.price !== null && item.price !== '' ? `₹${item.price}` : '—'}

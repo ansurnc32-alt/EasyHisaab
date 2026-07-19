@@ -20,7 +20,7 @@ const PDF_OPTIONS = [
   },
 ];
 
-const PdfDownloadModal = ({ isOpen, onClose }) => {
+const PdfDownloadModal = ({ isOpen, onClose, onDownload }) => {
   const [selectedOption, setSelectedOption] = useState('standard');
   const dialogRef = useRef(null);
 
@@ -116,7 +116,16 @@ const PdfDownloadModal = ({ isOpen, onClose }) => {
           <button type="button" className={styles.secondaryAction} onClick={onClose}>
             रद्द करें
           </button>
-          <button type="button" className={styles.primaryAction} disabled>
+          <button
+            type="button"
+            className={styles.primaryAction}
+            onClick={() => {
+              if (onDownload) {
+                onDownload(selectedOption);
+              }
+              onClose();
+            }}
+          >
             डाउनलोड
           </button>
         </div>
