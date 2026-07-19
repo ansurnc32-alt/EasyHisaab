@@ -132,6 +132,10 @@ const ReviewPage = () => {
       <ReviewSummary 
         totalItems={items.length} 
         estimatedTotal={estimatedTotal} 
+        items={items}
+        customerName={parsedResult.customerName}
+        businessType={businessType}
+        transcript={transcript}
       />
     </div>
   );

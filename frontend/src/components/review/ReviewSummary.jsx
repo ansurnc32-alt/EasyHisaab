@@ -5,10 +5,10 @@ import Button from '../ui/Button';
 import { normalizeBusinessType } from '../../utils/businessType';
 import styles from './ReviewSummary.module.css';
 
-const ReviewSummary = ({ totalItems, estimatedTotal }) => {
+const ReviewSummary = ({ totalItems, estimatedTotal, items, customerName, businessType: propBusinessType, transcript }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const businessType = normalizeBusinessType(location.state?.businessType || 'grocery');
+  const businessType = normalizeBusinessType(propBusinessType || location.state?.businessType || 'grocery');
 
   return (
     <div className={styles.stickyWrapper}>
@@ -30,7 +30,7 @@ const ReviewSummary = ({ totalItems, estimatedTotal }) => {
             <Button variant="outline" onClick={() => navigate('/voice', { state: { businessType } })}>
               वापस
             </Button>
-            <Button onClick={() => navigate('/pdf')}>
+            <Button onClick={() => navigate('/pdf', { state: { items, customerName, businessType, estimatedTotal, transcript } })}>
               PDF बनाएं
             </Button>
           </div>
