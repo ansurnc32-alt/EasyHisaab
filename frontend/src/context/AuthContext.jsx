@@ -1,94 +1,69 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import * as authService from '../services/authService';
 
 const AuthContext = createContext(null);
-
-const STORAGE_KEY = 'easyhisaab.auth.user';
-
-const mockUsers = [
-  {
-    id: 'mock-owner-1',
-    fullName: 'Rajesh Kumar',
-    shopName: 'Kirana House',
-    mobile: '9876543210',
-    email: 'rajesh@example.com',
-    password: 'Password123',
-  },
-];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = window.localStorage.getItem(STORAGE_KEY);
-    if (storedUser) {
+    let isMounted = true;
+
+    const restoreSession = async () => {
       try {
-        setUser(JSON.parse(storedUser));
+        const authenticatedUser = await authService.getCurrentUser();
+        if (isMounted) {
+          setUser(authenticatedUser);
+        }
       } catch {
-        window.localStorage.removeItem(STORAGE_KEY);
+        if (isMounted) {
+          setUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    }
-    setLoading(false);
-  }, []);
-
-  const login = async ({ identifier, password }) => {
-    setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 250));
-
-    const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
-    const matchedUser = mockUsers.find((candidate) => {
-      const emailMatches = candidate.email.toLowerCase() === normalizedIdentifier;
-      const mobileMatches = candidate.mobile === normalizedIdentifier;
-      return emailMatches || mobileMatches;
-    });
-
-    if (!matchedUser || matchedUser.password !== password) {
-      setLoading(false);
-      throw new Error('Invalid email/mobile or password.');
-    }
-
-    const safeUser = {
-      id: matchedUser.id,
-      fullName: matchedUser.fullName,
-      shopName: matchedUser.shopName,
-      mobile: matchedUser.mobile,
-      email: matchedUser.email,
     };
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(safeUser));
-    setUser(safeUser);
-    setLoading(false);
-    return safeUser;
+    restoreSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const login = async (credentials) => {
+    setLoading(true);
+
+    try {
+      const authenticatedUser = await authService.login(credentials);
+      setUser(authenticatedUser);
+      return authenticatedUser;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const register = async (formData) => {
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 250));
 
-    const duplicate = mockUsers.find((candidate) => candidate.email.toLowerCase() === String(formData.email || '').trim().toLowerCase());
-    if (duplicate) {
+    try {
+      const authenticatedUser = await authService.register(formData);
+      setUser(authenticatedUser);
+      return authenticatedUser;
+    } finally {
       setLoading(false);
-      throw new Error('An account with this email already exists.');
     }
-
-    const newUser = {
-      id: `mock-owner-${Date.now()}`,
-      fullName: formData.fullName,
-      shopName: formData.shopName,
-      mobile: formData.mobile,
-      email: formData.email,
-    };
-
-    mockUsers.push({ ...newUser, password: formData.password });
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-    setUser(newUser);
-    setLoading(false);
-    return newUser;
   };
 
-  const logout = () => {
-    window.localStorage.removeItem(STORAGE_KEY);
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+    }
   };
 
   const value = useMemo(() => ({

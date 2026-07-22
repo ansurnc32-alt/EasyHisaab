@@ -9,7 +9,7 @@ const SHARE_OPTIONS = [
   { label: 'Copy Link', icon: Copy },
 ];
 
-const PdfShareSheet = ({ isOpen, onClose }) => {
+const PdfShareSheet = ({ isOpen, onClose, onShare }) => {
   const sheetRef = useRef(null);
 
   useEffect(() => {
@@ -52,7 +52,16 @@ const PdfShareSheet = ({ isOpen, onClose }) => {
           {SHARE_OPTIONS.map((option) => {
             const Icon = option.icon;
             return (
-              <button key={option.label} type="button" className={styles.option} aria-label={option.label}>
+              <button
+                key={option.label}
+                type="button"
+                className={styles.option}
+                aria-label={option.label}
+                onClick={async () => {
+                  await onShare?.();
+                  onClose();
+                }}
+              >
                 <span className={styles.iconWrap}>
                   <Icon size={20} />
                 </span>

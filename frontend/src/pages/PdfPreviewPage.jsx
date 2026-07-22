@@ -44,6 +44,15 @@ const sanitizeItemName = (name = '', price = '') => {
   return clean.replace(/\s+/g, ' ').trim();
 };
 
+const sanitizeFilenameSegment = (value, fallback) => {
+  const sanitized = String(value || '')
+    .replace(/[\\/:*?"<>|]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  return sanitized || fallback;
+};
+
 const PdfPreviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -85,7 +94,7 @@ const PdfPreviewPage = () => {
     const dd = String(today.getDate()).padStart(2, '0');
     const dateStr = `${yyyy}${mm}${dd}`;
     const randomSeq = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
-    return `EH-${dateStr}-${randomSeq}`;
+    return `${dateStr}-${randomSeq}`;
   });
 
   useEffect(() => {
@@ -160,10 +169,7 @@ const PdfPreviewPage = () => {
     return grandTotal % 1 === 0 ? grandTotal.toFixed(0) : grandTotal.toFixed(2);
   }, [grandTotal]);
 
-  const handleDownloadPdf = (formatOption) => {
-    const element = paperRef.current;
-    if (!element) return;
-
+  const getPdfOptions = (formatOption) => {
     let scale = 2;
     if (formatOption === 'high-quality') {
       scale = 3;
@@ -171,22 +177,90 @@ const PdfPreviewPage = () => {
       scale = 4;
     }
 
-    const options = {
+    return {
       margin: 0,
-      filename: `${invoiceNumber}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: scale, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+      html2canvas: {
+        scale: scale,
+        useCORS: true,
+        logging: false,
+        onclone: (documentClone) => {
+          const pdfPaper = documentClone.querySelector('[data-pdf-paper]');
 
-    html2pdf().set(options).from(element).save();
+          if (!pdfPaper) {
+            return;
+          }
+
+          pdfPaper.style.aspectRatio = 'auto';
+          pdfPaper.style.minHeight = 'calc(1123px - 4.5rem)';
+        },
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] },
+    };
+  };
+
+  const pdfFilename = useMemo(() => {
+    const customer = sanitizeFilenameSegment(customerName, 'WalkInCustomer');
+    return `EasyHisaab-${customer}-${invoiceNumber}.pdf`;
+  }, [customerName, invoiceNumber]);
+
+  const createPdfBlob = async (formatOption = 'standard') => {
+    const element = paperRef.current;
+    if (!element) {
+      return null;
+    }
+
+    return html2pdf().set(getPdfOptions(formatOption)).from(element).outputPdf('blob');
+  };
+
+  const handleDownloadPdf = async (formatOption) => {
+    const pdfBlob = await createPdfBlob(formatOption);
+    if (!pdfBlob) {
+      return;
+    }
+
+    const downloadUrl = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = pdfFilename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const handleSharePdf = async () => {
+    if (!navigator.share || !window.File) {
+      return false;
+    }
+
+    const pdfBlob = await createPdfBlob();
+    if (!pdfBlob) {
+      return false;
+    }
+
+    const pdfFile = new File([pdfBlob], pdfFilename, { type: 'application/pdf' });
+    if (navigator.canShare && !navigator.canShare({ files: [pdfFile] })) {
+      return false;
+    }
+
+    try {
+      await navigator.share({ files: [pdfFile], title: pdfFilename });
+      return true;
+    } catch (error) {
+      if (error?.name !== 'AbortError') {
+        console.error('Unable to share PDF:', error);
+      }
+      return false;
+    }
   };
 
   if (!state.items) {
     return null;
   }
 
-  const businessName = user?.shopName || 'EasyHisaab Store';
+  const businessName = user?.fullName || 'EasyHisaab Store';
   const displayBusinessType = businessType === 'rental' ? 'rental bill' : 'grocery bill';
   const displayCustomerName = customerName ? customerName.trim() : 'Walk-in Customer';
 
@@ -225,7 +299,11 @@ const PdfPreviewPage = () => {
         onNewBill={() => navigate('/business-selection')}
       />
       <PdfDownloadModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} onDownload={handleDownloadPdf} />
-      <PdfShareSheet isOpen={showShareSheet} onClose={() => setShowShareSheet(false)} />
+      <PdfShareSheet
+        isOpen={showShareSheet}
+        onClose={() => setShowShareSheet(false)}
+        onShare={handleSharePdf}
+      />
       <PdfPrintDialog isOpen={showPrintDialog} onClose={() => setShowPrintDialog(false)} />
     </div>
   );

@@ -2,12 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/errorHandler.middleware.js';
+import authRouter from './routes/auth.routes.js';
 
 const app = express();
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
   })
 );
@@ -23,6 +24,8 @@ app.get('/api/v1/healthcheck', (req, res) => {
     message: 'EasyHisaab API is running',
   });
 });
+
+app.use('/api/v1/auth', authRouter);
 
 app.use(errorHandler);
 

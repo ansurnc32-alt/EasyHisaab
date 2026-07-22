@@ -33,3 +33,7 @@ Because we are exposing AI endpoints without hard user accounts, we are vulnerab
 ## CTO Warning
 The biggest security risk in V1 is **Session Hijacking via Device ID**. If someone extracts the `Device-ID` UUID from local storage, they can sync and download that business's history from another device. 
 *Mitigation for V2*: Transition to HTTP-Only secure cookies with JWT immediately when Phone Auth is introduced.
+
+## Authentication Cookie Deployment
+
+The authentication API uses an HttpOnly JWT cookie. Keep `COOKIE_SAME_SITE=lax` when the React frontend and API are served from the same site. For separately hosted frontend and backend domains, both must use HTTPS, `COOKIE_SAME_SITE` must be set to `none`, and `CORS_ORIGIN` must be the exact frontend origin with credentialed CORS enabled. Production automatically sets the cookie `Secure` flag.

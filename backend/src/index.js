@@ -1,12 +1,13 @@
 import connectDB from './db/index.js';
 import { app } from './app.js';
 
-import dns from "node:dns";
+// ===== MongoDB Atlas (Disabled for Local Development) =====
+// import dns from 'node:dns';
+// dns.setServers(['8.8.8.8', '1.1.1.1']);
+// Atlas SRV DNS overrides are intentionally disabled because local development
+// uses MongoDB Community Server and does not require external DNS resolution.
 
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
-console.log("Node DNS:", dns.getServers());
-
-
+// ===== Local MongoDB (Active) =====
 connectDB()
   .then(() => {
     app.listen(process.env.PORT || 8000, () => {

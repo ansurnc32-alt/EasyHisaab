@@ -24,8 +24,8 @@ const MainLayout = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: theme.spacing.sm }}>
             {user ? (
               <>
-                <span style={{ color: theme.colors.text.secondary, fontWeight: 600 }}>{user.shopName}</span>
-                <Button variant="outline" size="sm" onClick={() => { logout(); navigate('/login'); }}>
+                <span style={{ color: theme.colors.text.secondary, fontWeight: 600 }}>{user.fullName}</span>
+                <Button variant="outline" size="sm" onClick={async () => { await logout(); navigate('/login'); }}>
                   Logout
                 </Button>
               </>
