@@ -15,6 +15,7 @@ import PdfDownloadModal from '../components/pdf/PdfDownloadModal';
 import PdfShareSheet from '../components/pdf/PdfShareSheet';
 import PdfPrintDialog from '../components/pdf/PdfPrintDialog';
 import { resolveVoiceCommand } from '../utils/voiceCommands';
+import { createBill } from '../services/billService';
 import styles from './PdfPreviewPage.module.css';
 
 const sanitizeItemName = (name = '', price = '') => {
@@ -64,6 +65,10 @@ const PdfPreviewPage = () => {
   const customerName = state.customerName;
   const businessType = state.businessType || 'grocery';
   const transcript = state.transcript || '';
+  const existingBillId = state.billId;
+  const billDate = state.billDate ? new Date(state.billDate) : new Date();
+  const savedBillIdRef = useRef(existingBillId);
+  const saveBillPromiseRef = useRef(null);
 
   // Redirect to review page if no bill data/items are present
   useEffect(() => {
@@ -74,13 +79,13 @@ const PdfPreviewPage = () => {
 
   // Voice commands resolving
   const voiceCommand = useMemo(() => resolveVoiceCommand(transcript), [transcript]);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(Boolean(state.openDownload));
   const [showShareSheet, setShowShareSheet] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
 
   // Generate stable Date and Invoice Number on mount
   const [date] = useState(() => {
-    return new Date().toLocaleDateString('hi-IN', {
+    return billDate.toLocaleDateString('hi-IN', {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
@@ -88,6 +93,9 @@ const PdfPreviewPage = () => {
   });
 
   const [invoiceNumber] = useState(() => {
+    if (state.billNumber) {
+      return state.billNumber;
+    }
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -211,7 +219,32 @@ const PdfPreviewPage = () => {
       return null;
     }
 
-    return html2pdf().set(getPdfOptions(formatOption)).from(element).outputPdf('blob');
+    const pdfBlob = await html2pdf().set(getPdfOptions(formatOption)).from(element).outputPdf('blob');
+
+    if (!savedBillIdRef.current) {
+      try {
+        saveBillPromiseRef.current ??= createBill({
+          customerName: displayCustomerName,
+          billNumber: invoiceNumber,
+          billDate: billDate.toISOString(),
+          businessType,
+          items: processedItems.map((item) => ({
+            name: item.name || 'Item',
+            quantity: Number(item.quantity) || 0,
+            price: Number(item.price) || 0,
+            amount: Number(item.amount) || 0,
+          })),
+          totalAmount: grandTotal,
+        });
+        const savedBill = await saveBillPromiseRef.current;
+        savedBillIdRef.current = savedBill._id;
+      } catch (error) {
+        saveBillPromiseRef.current = null;
+        console.error('Unable to save bill history:', error);
+      }
+    }
+
+    return pdfBlob;
   };
 
   const handleDownloadPdf = async (formatOption) => {

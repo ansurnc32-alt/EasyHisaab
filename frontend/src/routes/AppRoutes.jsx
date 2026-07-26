@@ -9,6 +9,7 @@ import ReviewPage from '../pages/ReviewPage';
 import PdfPreviewPage from '../pages/PdfPreviewPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import HistoryPage from '../pages/HistoryPage';
 
 const AppRoutes = () => {
   return (
@@ -22,6 +23,7 @@ const AppRoutes = () => {
           <Route path="voice" element={<ProtectedRoute><VoiceRecordingPage /></ProtectedRoute>} />
           <Route path="review" element={<ProtectedRoute><ReviewPage /></ProtectedRoute>} />
           <Route path="pdf" element={<ProtectedRoute><PdfPreviewPage /></ProtectedRoute>} />
+          <Route path="history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
         </Route>
       </Routes>
     </Router>

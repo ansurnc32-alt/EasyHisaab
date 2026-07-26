@@ -25,6 +25,7 @@ const MainLayout = () => {
             {user ? (
               <>
                 <span style={{ color: theme.colors.text.secondary, fontWeight: 600 }}>{user.fullName}</span>
+                <Link to="/history" style={{ color: theme.colors.primary, fontWeight: 600, textDecoration: 'none' }}>History</Link>
                 <Button variant="outline" size="sm" onClick={async () => { await logout(); navigate('/login'); }}>
                   Logout
                 </Button>

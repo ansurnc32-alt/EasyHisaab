@@ -3,6 +3,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorHandler } from './middlewares/errorHandler.middleware.js';
 import authRouter from './routes/auth.routes.js';
+import billRouter from './routes/bill.routes.js';
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get('/api/v1/healthcheck', (req, res) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/bills', billRouter);
 
 app.use(errorHandler);
 
